@@ -1,21 +1,20 @@
 FROM node:22-alpine
 
-# Install system utilities needed for compiling native audio binaries
+# 1. Install necessary system tools for compilation
 RUN apk add --no-cache python3 make g++ 
 
 WORKDIR /app
 
-# 1. Copy package files and install ALL dependencies (including dev)
-COPY package*.json ./
-RUN npm install
-
-# 2. Copy the entire repository into the container (this includes the scripts folder)
+# 2. CRITICAL: Copy ALL project files first (including the scripts folder)
 COPY . .
 
-# 3. Explicitly execute the binary installer during the build phase
+# 3. Run npm install now that the scripts folder physically exists in the container
+RUN npm install --include=dev
+
+# 4. Explicitly make sure the binaries pull script fires safely
 RUN node scripts/install-binaries.js || true
 
-# 4. Clean up development packages to shrink the image size
+# 5. Clean up development dependencies to keep the image small
 RUN npm prune --production
 
 CMD ["npm", "start"]
