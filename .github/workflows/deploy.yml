@@ -2,30 +2,30 @@ name: Build and Push with Buildpacks
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ] # Triggers the build whenever you push to the main branch
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout the source code
+      # 1. Pulls your repository files into the GitHub runner virtual machine
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Corrected: Install the Pack CLI using a valid up-to-date version
+      # 2. Installs the Cloud Native Buildpacks Pack CLI on the runner
       - name: Set up Pack CLI
         uses: buildpacks/github-actions/setup-pack@v6.1.1
 
-      # 3. Log in to Docker Hub so you can publish the finished image
+      # 3. Logs into Docker Hub using your GitHub Secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Run the buildpack command using the Pack CLI directly
+      # 4. Compiles the Node.js application and pushes it directly to Docker Hub
       - name: Build and push image with Buildpacks
         run: |
           pack build ${{ secrets.DOCKERHUB_USERNAME }}/musicbot:latest \
-            --builder gcr.io/buildpacks/builder:v1 \
+            --builder gcr.io/buildpacks/builder:google-22 \
             --publish
