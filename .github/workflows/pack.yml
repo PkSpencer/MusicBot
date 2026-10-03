@@ -1,0 +1,6 @@
+- name: Build with Buildpacks (No Dockerfile Required)
+  uses: buildpacks/github-actions/pack@v2.2.0
+  with:
+    image: 'musicbot:latest'
+    # Automatically chooses the right builder for your language
+    builder: 'gcr.io/buildpacks/builder:v1' 
