@@ -1,17 +1,21 @@
-# Use the stable Node.js runtime environment
 FROM node:22-alpine
 
-# Set the internal folder to exactly /app
+# Install system utilities needed for compiling native audio binaries
+RUN apk add --no-cache python3 make g++ 
+
 WORKDIR /app
 
-# Copy dependency files first to utilize Docker layer caching
+# 1. Copy package files and install ALL dependencies (including dev)
 COPY package*.json ./
+RUN npm install
 
-# Install only production dependencies (keeps the image lightweight)
-RUN npm ci --only=production
-
-# Copy the rest of the MusicBot files into /app
+# 2. Copy the entire repository into the container (this includes the scripts folder)
 COPY . .
 
-# Start the application
+# 3. Explicitly execute the binary installer during the build phase
+RUN node scripts/install-binaries.js || true
+
+# 4. Clean up development packages to shrink the image size
+RUN npm prune --production
+
 CMD ["npm", "start"]
