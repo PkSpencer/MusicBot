@@ -1,16 +1,33 @@
- steps:
-      # 1. Pulls your repository files into the GitHub runner
+name: Build and Push with Buildpacks
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Sets up Docker Buildx virtual builder
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 3. Builds the image using the newly created Dockerfile
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      # 2. Log in to Docker Hub so Buildpacks can push the finished image
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          context: .
-          file: ./Dockerfile
-          push: true # Change to true if you are pushing to Docker Hub/GHCR
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Build and Push using Cloud Native Buildpacks
+      - name: Build with Buildpacks
+        uses: buildpacks/github-actions/pack@v2.2.0
+        with:
+          # Automatically detects Node.js and handles production building
+          builder: 'gcr.io/buildpacks/builder:v1'
+          
+          # Defines the target image name on Docker Hub
+          image: '${{ secrets.DOCKERHUB_USERNAME }}/musicbot:latest'
+          
+          # Instructs the runner to push directly to your registry after compiling
+          push: true
