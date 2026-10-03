@@ -12,22 +12,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Log in to Docker Hub so Buildpacks can push the finished image
+      # 2. Corrected: Install the Pack CLI using a valid up-to-date version
+      - name: Set up Pack CLI
+        uses: buildpacks/github-actions/setup-pack@v6.1.1
+
+      # 3. Log in to Docker Hub so you can publish the finished image
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. Build and Push using Cloud Native Buildpacks
-      - name: Build with Buildpacks
-        uses: buildpacks/github-actions/pack@v2.2.0
-        with:
-          # Automatically detects Node.js and handles production building
-          builder: 'gcr.io/buildpacks/builder:v1'
-          
-          # Defines the target image name on Docker Hub
-          image: '${{ secrets.DOCKERHUB_USERNAME }}/musicbot:latest'
-          
-          # Instructs the runner to push directly to your registry after compiling
-          push: true
+      # 4. Run the buildpack command using the Pack CLI directly
+      - name: Build and push image with Buildpacks
+        run: |
+          pack build ${{ secrets.DOCKERHUB_USERNAME }}/musicbot:latest \
+            --builder gcr.io/buildpacks/builder:v1 \
+            --publish
